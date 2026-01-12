@@ -96,6 +96,8 @@ jobs:
         uses: actions/checkout@v4
 
       # Set up Node.js 18 for React frontend
+      # Note: package-lock.json is gitignored in this project (see .gitignore line 34)
+      # Therefore, we cache based on package.json and use 'npm install' instead of 'npm ci'
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -104,7 +106,7 @@ jobs:
           cache-dependency-path: frontend/package.json
 
       # Install frontend dependencies
-      # Use npm install instead of npm ci since package-lock.json is gitignored
+      # Use npm install (not npm ci) because package-lock.json is intentionally gitignored
       - name: Install dependencies
         working-directory: frontend
         run: npm install
@@ -115,7 +117,9 @@ jobs:
         run: npm run build
 
       # Run frontend tests (if they exist)
-      # Note: Tests may have configuration issues, so we continue on error
+      # Note: Tests have pre-existing configuration issues with jest and react-router-dom ESM modules
+      # Using continue-on-error to not block the build while tests are being fixed
+      # The successful build step above validates that the code compiles correctly
       - name: Run frontend tests
         working-directory: frontend
         run: npm test -- --watchAll=false --passWithNoTests
