@@ -38,3 +38,9 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// Disable the generation of the plain JAR (without dependencies)
+// We only need the executable Spring Boot JAR for Docker deployment
+tasks.named('jar') {
+	enabled = false
+}
