@@ -24,23 +24,26 @@ This ensures that `COPY --from=build /app/build/libs/*.jar app.jar` in the Docke
 
 ### Alternative Solutions
 
-If you need to keep both JARs for other purposes, you can modify the Dockerfile COPY command to be more specific:
+If you need to keep both JARs for other purposes, you can modify the Dockerfile COPY command to handle multiple files:
 
 **Option 1**: Copy to a directory (add trailing slash)
 ```dockerfile
 COPY --from=build /app/build/libs/*.jar ./jars/
 ```
 
-**Option 2**: Be specific about the JAR name
-```dockerfile
-COPY --from=build /app/build/libs/ferry-booking-app-*[!plain].jar app.jar
-```
-
-**Option 3**: Copy the larger file (the executable JAR is much larger)
+**Option 2**: Copy all JARs and select the correct one with RUN command
 ```dockerfile
 COPY --from=build /app/build/libs/*.jar ./
-RUN mv $(ls -S *.jar | head -1) app.jar && rm -f *-plain.jar
+# The executable JAR is much larger than the plain JAR
+RUN mv $(ls -S *.jar | grep -v plain | head -1) app.jar && rm -f *-plain.jar
 ```
+
+**Option 3**: Use an exact filename pattern (requires knowing the version)
+```dockerfile
+COPY --from=build /app/build/libs/ferry-booking-app-0.0.1-SNAPSHOT.jar app.jar
+```
+
+Note: Option 3 requires updating the Dockerfile whenever the version changes, so it's less flexible.
 
 ## Docker Buildx
 
