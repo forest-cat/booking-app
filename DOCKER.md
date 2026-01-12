@@ -46,7 +46,7 @@ RUN mv $(ls -S *.jar | head -1) app.jar && rm -f *-plain.jar
 
 ### What is Docker Buildx?
 
-Docker Buildx is an extended build capabilities plugin that comes with Docker  and provides:
+Docker Buildx is an extended build capabilities plugin that comes with Docker and provides:
 - Multi-platform image building
 - Advanced caching mechanisms
 - Build optimization features
@@ -68,7 +68,7 @@ This occurs because:
 2. The warning appears when buildx features are requested but not fully available
 3. Standard docker builds still work fine without buildx
 
-####Fix Options
+#### Fix Options
 
 **Option 1: Install Docker Buildx** (Recommended for production)
 
