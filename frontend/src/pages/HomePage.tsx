@@ -55,6 +55,7 @@ const HomePage: React.FC = () => {
       setSearchResults([]);
     } catch (error) {
       console.error('Booking failed:', error);
+      alert('Failed to create booking. Please try again.');
     }
   };
 

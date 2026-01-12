@@ -13,6 +13,8 @@ import {
 } from '@mui/material';
 import { Ride, Cabin, BookingRequest } from '../types';
 
+const DEFAULT_MAX_PASSENGERS = 10;
+
 interface BookingFormProps {
   open: boolean;
   ride: Ride | null;
@@ -152,7 +154,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 name="numberOfPassengers"
                 value={formData.numberOfPassengers}
                 onChange={handleChange}
-                inputProps={{ min: 1, max: cabin?.capacity || 10 }}
+                inputProps={{ min: 1, max: cabin?.capacity || DEFAULT_MAX_PASSENGERS }}
               />
             </Grid>
           </Grid>
