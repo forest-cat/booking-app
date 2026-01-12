@@ -12,6 +12,8 @@ jobs:
   backend-build-test:
     name: Backend Build and Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     services:
       postgres:
@@ -77,6 +79,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: backend-build-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
