@@ -2,6 +2,8 @@
 
 A full-stack application for booking ferry rides, built with Spring Boot backend and React frontend.
 
+**📘 [Quick Start Guide](QUICKSTART.md)** - Get started in 5 minutes!
+
 ## Features
 
 ### Backend
