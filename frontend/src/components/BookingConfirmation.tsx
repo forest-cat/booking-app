@@ -6,15 +6,12 @@ import {
   Grid,
   Divider,
   Chip,
-  Card,
-  CardContent,
   Alert,
 } from '@mui/material';
 import {
   CheckCircle,
   DirectionsBoat,
   Person,
-  Event,
   AttachMoney,
   Cloud,
   Navigation,

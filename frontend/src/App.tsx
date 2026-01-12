@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, AppBar, Toolbar, Button, Box, Container } from '@mui/material';
+import { CssBaseline, AppBar, Toolbar, Button, Box } from '@mui/material';
 import HomePage from './pages/HomePage';
 import Dashboard from './pages/Dashboard';
 
