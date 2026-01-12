@@ -1,0 +1,13 @@
+.git
+.gitignore
+README.md
+build/
+.gradle/
+*.md
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+tmp/
+*.log
