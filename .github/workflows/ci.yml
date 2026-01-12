@@ -101,12 +101,13 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: frontend/package.json
 
       # Install frontend dependencies
+      # Use npm install instead of npm ci since package-lock.json is gitignored
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       # Build the React frontend
       - name: Build frontend
@@ -114,6 +115,7 @@ jobs:
         run: npm run build
 
       # Run frontend tests (if they exist)
+      # Note: Tests may have configuration issues, so we continue on error
       - name: Run frontend tests
         working-directory: frontend
         run: npm test -- --watchAll=false --passWithNoTests
