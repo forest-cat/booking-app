@@ -12,10 +12,17 @@ This repository uses GitHub Actions for continuous integration and deployment. T
 - **Database**: Uses PostgreSQL 15 as a service container for integration tests
 - **Caching**: Gradle dependencies are cached to optimize build times
 
+### Frontend Build and Test
+- **Build**: Compiles the React frontend using Node.js 18 and npm
+- **Test**: Runs frontend tests (if configured)
+- **Caching**: npm dependencies are cached to optimize build times
+- **Artifacts**: Frontend build artifacts are uploaded for review
+
 ### Docker Integration
-- **Build**: Creates Docker images for the backend application
-- **Push**: Pushes images to DockerHub (only on push to `main` branch)
+- **Build**: Creates Docker images for both backend and frontend applications
+- **Push**: Optionally pushes images to DockerHub (only on push to `main` branch, if credentials are configured)
 - **Tagging**: Images are tagged with branch name, commit SHA, and `latest` for main branch
+- **Flexibility**: Works without DockerHub credentials - builds images locally for testing
 
 ## Triggers
 
@@ -23,9 +30,11 @@ The pipeline runs on:
 - **Push** to the `main` branch
 - **Pull requests** targeting the `main` branch
 
-## Required Secrets
+## Required Secrets (Optional)
 
-To enable Docker image publishing, you need to configure the following secrets in your GitHub repository:
+Docker image publishing is **optional**. The pipeline will work without these secrets by building images locally.
+
+To enable Docker image publishing to DockerHub, configure the following secrets in your GitHub repository:
 
 ### Setting Up Secrets
 
@@ -47,75 +56,64 @@ To enable Docker image publishing, you need to configure the following secrets i
 4. Give it a descriptive name (e.g., "GitHub Actions")
 5. Copy the token and add it as `DOCKERHUB_TOKEN` secret in GitHub
 
+**Note**: If these secrets are not configured, the pipeline will still build Docker images but will not push them to DockerHub. This allows development teams to use the pipeline without requiring DockerHub accounts.
+
 ## Jobs
 
 ### 1. backend-build-test
 
-This job:
+This job builds and tests the Spring Boot backend:
 - Checks out the code
-- Sets up JDK 17
-- Caches Gradle dependencies
-- Builds the application (without running tests first)
-- Runs all tests with PostgreSQL service
-- Uploads test results as artifacts
+- Sets up JDK 17 (Eclipse Temurin distribution)
+- Caches Gradle dependencies for faster subsequent builds
+- Builds the application (without running tests first to separate concerns)
+- Runs all tests with PostgreSQL service container
+- Uploads test results as artifacts (even on failure for debugging)
 
 **Environment Variables:**
 - `SPRING_DATASOURCE_URL`: Points to the PostgreSQL service container
-- `SPRING_DATASOURCE_USERNAME`: Database user
-- `SPRING_DATASOURCE_PASSWORD`: Database password
+- `SPRING_DATASOURCE_USERNAME`: Database user for tests
+- `SPRING_DATASOURCE_PASSWORD`: Database password for tests
 
-### 2. docker-build-push
+### 2. frontend-build-test
 
-This job:
-- Runs only after successful backend build and test
+This job builds and tests the React frontend:
+- Checks out the code
+- Sets up Node.js 18
+- Caches npm dependencies for faster subsequent builds
+- Installs dependencies using `npm ci` (clean install for reproducibility)
+- Builds the React application
+- Runs frontend tests (with `--passWithNoTests` to not fail if no tests exist yet)
+- Uploads frontend build artifacts
+
+### 3. docker-build-push
+
+This job builds Docker images for deployment:
+- Runs only after successful backend and frontend builds
 - Only executes on push to `main` (not on pull requests)
-- Builds the Docker image using the existing `Dockerfile`
-- Pushes the image to DockerHub with appropriate tags
-- Uses GitHub Actions cache for Docker layers
+- Checks if DockerHub credentials are available
+- Sets up Docker Buildx for advanced features (caching, multi-platform support)
+- Logs into DockerHub (only if credentials are configured)
+- Builds backend Docker image from `./Dockerfile`
+- Builds frontend Docker image from `./frontend/Dockerfile`
+- Pushes images to DockerHub (only if credentials are available)
+- Uses GitHub Actions cache for Docker layers to speed up builds
+- Provides a summary of what was built and pushed
+
+**Conditional Push Logic:**
+- If DockerHub secrets are configured: Builds and pushes images with proper tags
+- If DockerHub secrets are NOT configured: Builds images locally for validation (tagged as `local`)
 
 ## Docker Image Tags
 
-Images are tagged with:
+When pushed to DockerHub, images are tagged with:
 - `main` - the branch name
 - `main-<commit-sha>` - branch with commit SHA
 - `latest` - only for the default branch (main)
 
-## Future Enhancements
-
-### Frontend Integration
-
-When a React frontend is added to the repository, the workflow can be extended with:
-
-```yaml
-frontend-build-test:
-  name: Frontend Build and Test
-  runs-on: ubuntu-latest
-
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-
-    - name: Install dependencies
-      working-directory: frontend
-      run: npm ci
-
-    - name: Build frontend
-      working-directory: frontend
-      run: npm run build
-
-    - name: Run frontend tests
-      working-directory: frontend
-      run: npm test -- --watchAll=false
-```
-
-And a separate Docker build step for the frontend if needed.
+Two separate images are created:
+- `ferry-booking-app-backend` - Spring Boot backend
+- `ferry-booking-app-frontend` - React frontend with Nginx
 
 ## Local Testing
 
@@ -130,12 +128,30 @@ To test the workflow components locally:
 ./gradlew test
 ```
 
+### Frontend Build and Test
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm ci
+
+# Build the frontend
+npm run build
+
+# Run tests
+npm test -- --watchAll=false
+```
+
 ### Docker Build
 ```bash
-# Build the Docker image
-docker build -t ferry-booking-app:local .
+# Build the backend Docker image
+docker build -t ferry-booking-app-backend:local .
 
-# Test the image
+# Build the frontend Docker image
+docker build -t ferry-booking-app-frontend:local ./frontend
+
+# Test both with docker-compose
 docker-compose up
 ```
 
@@ -143,23 +159,156 @@ docker-compose up
 
 ### Gradle Build Fails
 - Check that JDK 17 is properly configured
-- Ensure Gradle wrapper has execute permissions
+- Ensure Gradle wrapper has execute permissions (`chmod +x gradlew`)
 - Verify PostgreSQL service is healthy
+- Check database connection settings in application properties
 
-### Docker Push Fails
-- Verify DockerHub secrets are correctly configured
+### Frontend Build Fails
+- Verify Node.js 18 is installed
+- Check that `package-lock.json` exists (run `npm install` if missing)
+- Review build errors in the logs
+- Ensure all dependencies are compatible
+
+### Docker Build Fails
+- **Backend**: Verify Gradle build succeeds first
+- **Frontend**: Verify npm build succeeds first
+- Check that Dockerfiles exist in correct locations
+- Review Docker build logs for specific errors
+
+### Docker Push Fails (if using DockerHub)
+- Verify DockerHub secrets are correctly configured in GitHub repository settings
 - Check that the DockerHub token has write permissions
 - Ensure the repository name matches your DockerHub username
+- Verify you're not exceeding DockerHub rate limits
 
 ### Tests Fail
-- Check PostgreSQL service logs
-- Verify database connection settings
+- Check PostgreSQL service logs in the GitHub Actions run
+- Verify database connection settings match the service configuration
 - Ensure test database is properly initialized
+- Review test output in uploaded artifacts
+
+### No DockerHub Credentials
+This is **not an error**! The pipeline is designed to work without DockerHub:
+- Docker images will be built successfully for validation
+- Images will be tagged as `local` instead of being pushed
+- All other pipeline steps will complete normally
+- To enable pushing, simply add the DockerHub secrets as described above
 
 ## Monitoring
 
 After each workflow run:
 1. Check the **Actions** tab in your GitHub repository
-2. Review build logs for any errors
+2. Review build logs for any errors or warnings
 3. Download test result artifacts for detailed test reports
-4. Monitor DockerHub for successfully pushed images
+4. Check the job summary for Docker build status
+5. If DockerHub is configured, monitor DockerHub for successfully pushed images
+
+## Best Practices
+
+1. **Run tests locally** before pushing to ensure quick feedback
+2. **Keep dependencies updated** to get security patches and bug fixes
+3. **Review failed builds promptly** to maintain code quality
+4. **Use meaningful commit messages** to track changes in workflow runs
+5. **Monitor resource usage** to optimize build times
+6. **Cache effectively** - the pipeline uses caching for Gradle, npm, and Docker layers
+7. **Test Docker builds locally** using `docker-compose` before pushing
+
+## Advanced Configuration
+
+### Customizing Build Steps
+
+You can customize the workflow by modifying `.github/workflows/ci.yml`:
+
+```yaml
+# Add environment-specific builds
+- name: Build for production
+  run: ./gradlew build -Pprofile=prod
+
+# Add code quality checks
+- name: Run linter
+  working-directory: frontend
+  run: npm run lint
+
+# Add security scanning
+- name: Run security audit
+  run: npm audit --audit-level=moderate
+```
+
+### Multi-Platform Docker Builds
+
+If you need to build for multiple platforms (e.g., AMD64 and ARM64):
+
+```yaml
+- name: Build multi-platform backend image
+  uses: docker/build-push-action@v5
+  with:
+    context: .
+    platforms: linux/amd64,linux/arm64
+    push: ${{ steps.dockerhub-check.outputs.available == 'true' }}
+    tags: ${{ steps.meta-backend.outputs.tags }}
+```
+
+### Deployment Steps
+
+To add automated deployment (e.g., to Kubernetes, AWS, Azure):
+
+```yaml
+deploy:
+  name: Deploy to Production
+  runs-on: ubuntu-latest
+  needs: docker-build-push
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  
+  steps:
+    - name: Deploy to environment
+      run: |
+        # Add your deployment commands here
+        echo "Deploying to production..."
+```
+
+## Pipeline Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Push to main or PR                     │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+                      ├──────────────┬─────────────────────┐
+                      ▼              ▼                     ▼
+            ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+            │   Backend    │  │   Frontend   │  │              │
+            │ Build & Test │  │ Build & Test │  │              │
+            │  (Gradle)    │  │    (npm)     │  │              │
+            └──────┬───────┘  └──────┬───────┘  │              │
+                   │                 │           │              │
+                   └────────┬────────┘           │              │
+                            ▼                    │              │
+                    (on main push only)          │              │
+                   ┌─────────────────┐           │              │
+                   │ Check DockerHub │           │              │
+                   │   Credentials   │           │              │
+                   └────────┬────────┘           │              │
+                            │                    │              │
+                   ┌────────┴────────┐           │              │
+                   ▼                 ▼           │              │
+           ┌──────────────┐   ┌──────────────┐  │              │
+           │  Build & Push│   │  Build Only  │  │              │
+           │  to DockerHub│   │   (Local)    │  │              │
+           │   Backend +  │   │  Backend +   │  │              │
+           │   Frontend   │   │   Frontend   │  │              │
+           └──────────────┘   └──────────────┘  │              │
+                   │                 │           │              │
+                   └────────┬────────┘           │              │
+                            ▼                    │              │
+                    ┌──────────────┐             │              │
+                    │   Success!   │             │              │
+                    └──────────────┘             │              │
+```
+
+## Support
+
+For issues or questions about the CI/CD pipeline:
+1. Check the [GitHub Actions documentation](https://docs.github.com/en/actions)
+2. Review workflow run logs in the Actions tab
+3. Consult this documentation and `DOCKER.md` for Docker-specific issues
+4. Open an issue in the repository for team discussion
