@@ -225,6 +225,8 @@ docker-compose down
 docker-compose up --build
 ```
 
+**Note**: For detailed information about Docker build configuration, handling buildx warnings, and troubleshooting, see [DOCKER.md](DOCKER.md).
+
 ## License
 
 This project is licensed under the MIT License.

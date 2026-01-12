@@ -10,6 +10,8 @@ RUN ./gradlew build -x test
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
+# Copy the Spring Boot executable JAR
+# Note: The plain JAR generation is disabled in build.gradle to avoid conflicts
 COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
