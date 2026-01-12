@@ -30,5 +30,18 @@ services:
       - "8080:8080"
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ferry-frontend
+    depends_on:
+      - app
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080/api
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
 volumes:
   postgres-data:

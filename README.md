@@ -1,9 +1,10 @@
 # Ferry Booking Application
 
-A comprehensive backend application for booking ferry rides, built with Spring Boot and PostgreSQL.
+A full-stack application for booking ferry rides, built with Spring Boot backend and React frontend.
 
 ## Features
 
+### Backend
 - **Port Management**: Create, read, update, and delete ferry ports
 - **Ride Management**: Manage ferry rides between ports with scheduling
 - **Cabin Selection**: Book specific cabins on ferry rides
@@ -18,8 +19,17 @@ A comprehensive backend application for booking ferry rides, built with Spring B
 - **Database Migration**: Automated schema management with Flyway
 - **Docker Support**: Containerized deployment with Docker Compose
 
+### Frontend
+- **Search & Book Ferry Rides**: User-friendly search interface with real-time results
+- **Interactive Cabin Selection**: Visual cabin selection with pricing details
+- **Booking Confirmation**: QR code generation for check-in
+- **Dashboard**: View all bookings with trip status, weather, and ship positions
+- **Interactive Maps**: Live ship tracking with Leaflet maps
+- **Responsive Design**: Fully responsive UI for mobile and desktop
+
 ## Technology Stack
 
+### Backend
 - **Java 17**
 - **Spring Boot 3.2.1**
 - **PostgreSQL 15**
@@ -29,9 +39,19 @@ A comprehensive backend application for booking ferry rides, built with Spring B
 - **ZXing** for QR code generation
 - **Docker & Docker Compose** for containerization
 
+### Frontend
+- **React 18** with TypeScript
+- **Material-UI (MUI)** for UI components
+- **React Router** for navigation
+- **React Query (TanStack Query)** for data fetching
+- **Axios** for API calls
+- **React Leaflet** for interactive maps
+- **Nginx** for production serving
+
 ## Prerequisites
 
 - Java 17 or higher
+- Node.js 18 or higher (for frontend development)
 - Docker and Docker Compose (for containerized deployment)
 - PostgreSQL 15 (if running locally without Docker)
 
@@ -50,9 +70,14 @@ cd booking-app
 docker-compose up --build
 ```
 
-The application will be available at `http://localhost:8080`
+This will start:
+- PostgreSQL database on port 5432
+- Backend API on port 8080 (http://localhost:8080)
+- Frontend application on port 3000 (http://localhost:3000)
 
 ### Running Locally
+
+#### Backend
 
 1. Start PostgreSQL database:
 ```bash
@@ -66,6 +91,30 @@ createdb -U postgres ferrydb
 ```bash
 ./gradlew bootRun
 ```
+
+#### Frontend
+
+1. Navigate to the frontend directory:
+```bash
+cd frontend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create a `.env` file:
+```bash
+cp .env.example .env
+```
+
+4. Start the development server:
+```bash
+npm start
+```
+
+The frontend will be available at http://localhost:3000
 
 ## API Endpoints
 

@@ -26,3 +26,9 @@ Thumbs.db
 
 # Test coverage
 .jacoco/
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env
+frontend/package-lock.json
