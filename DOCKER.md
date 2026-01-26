@@ -26,7 +26,7 @@ RUN if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then \
 
 #### Why This Matters
 
-- **`npm ci`** (Clean Install): Requires a `package-lock.json` or `npm-shrinkwrap.json` file. It's faster and more reliable for production builds as it installs exact versions from the lock file and removes the node_modules directory before installation.
+- **`npm ci`** (Clean Install): Requires a `package-lock.json` or `npm-shrinkwrap.json` file. It's faster and more reliable for production builds as it installs exact versions from the lock file. It completely removes any existing node_modules directory before installing dependencies, ensuring a clean state.
 
 - **`npm install`**: Works without a lock file but may install different dependency versions over time. Used as a fallback when no lock file is present.
 
