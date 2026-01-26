@@ -3,10 +3,9 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Copy package files
-# Copy both package.json and lock files (if they exist)
-# Note: Using explicit patterns to ensure lock files are copied
-COPY package.json package*.json ./
+# Copy package files including lock files
+# Note: package*.json will copy package.json and package-lock.json (if present)
+COPY package*.json ./
 
 # Install dependencies
 # Use npm ci if package-lock.json exists (faster and more reliable for production builds)
