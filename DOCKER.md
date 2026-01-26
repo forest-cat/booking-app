@@ -6,6 +6,48 @@ This document provides additional information about building and deploying the f
 
 ## Docker Build Configuration
 
+### Frontend NPM Dependencies Configuration
+
+The frontend Dockerfile has been configured to handle dependency installation intelligently:
+
+#### Lock File Strategy
+
+The frontend uses a conditional installation approach that checks for the presence of a lock file:
+
+```dockerfile
+RUN set -e; \
+    if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then \
+      echo "Lock file found, using npm ci for clean install..."; \
+      npm ci; \
+    else \
+      echo "No lock file found, using npm install..."; \
+      npm install; \
+    fi
+```
+
+#### Why This Matters
+
+- **`npm ci`** (Clean Install): Requires a `package-lock.json` or `npm-shrinkwrap.json` file. It's faster and more reliable for production builds as it installs exact versions from the lock file. It completely removes any existing node_modules directory before installing dependencies, ensuring a clean state.
+
+- **`npm install`**: Works without a lock file but may install different dependency versions over time. Used as a fallback when no lock file is present.
+
+#### Best Practices
+
+1. **Always commit package-lock.json**: The `package-lock.json` file is now tracked in the repository to ensure consistent builds across all environments (local, CI/CD, Docker).
+
+2. **Lock file benefits**:
+   - Guarantees deterministic builds
+   - Faster installation in Docker (npm ci is optimized for CI/CD)
+   - Prevents "works on my machine" issues caused by dependency version differences
+
+3. **If you need to update dependencies**:
+   ```bash
+   cd frontend
+   npm install <package-name>
+   git add package.json package-lock.json
+   git commit -m "Update frontend dependencies"
+   ```
+
 ### Spring Boot JAR Configuration
 
 The application uses Spring Boot Gradle plugin which by default creates two JAR files:
@@ -120,6 +162,45 @@ docker buildx build --platform linux/amd64,linux/arm64 -t ferry-booking-app .
 ```
 
 ## Troubleshooting
+
+### Frontend Build Issues
+
+#### npm ci Requires Lock File
+
+If you see an error like:
+```
+npm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync
+```
+or
+```
+npm ERR! `npm ci` requires a package-lock.json or npm-shrinkwrap.json
+```
+
+**Solution**: The frontend Dockerfile now automatically handles this by checking for the lock file and falling back to `npm install` if needed. However, for production builds, ensure `package-lock.json` is committed to the repository:
+
+```bash
+cd frontend
+npm install  # This will generate package-lock.json if missing
+git add package-lock.json
+git commit -m "Add package-lock.json for consistent builds"
+```
+
+#### Frontend Dependencies Out of Sync
+
+If the frontend build fails with dependency-related errors, try:
+
+```bash
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+# Test the build locally
+npm run build
+# If successful, commit the new lock file
+git add package-lock.json
+git commit -m "Update package-lock.json"
+```
+
+### Backend Build Issues
 
 ### Build Fails with SSL Certificate Errors
 

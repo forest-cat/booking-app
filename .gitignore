@@ -31,4 +31,4 @@ Thumbs.db
 frontend/node_modules/
 frontend/build/
 frontend/.env
-frontend/package-lock.json
+# Note: package-lock.json is now tracked to ensure consistent builds in Docker and CI/CD
