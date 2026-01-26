@@ -15,7 +15,8 @@ The frontend Dockerfile has been configured to handle dependency installation in
 The frontend uses a conditional installation approach that checks for the presence of a lock file:
 
 ```dockerfile
-RUN if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then \
+RUN set -e; \
+    if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then \
       echo "Lock file found, using npm ci for clean install..."; \
       npm ci; \
     else \
