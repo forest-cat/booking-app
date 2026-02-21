@@ -1,3 +1,6 @@
+> [!WARNING]
+> Disclaimer: This application was created as part of a college project and therefore is still accessible, i do not support vibe coding and this application is not fully working and probably full of bad security issues. I highly recommend **not** downloading and running it in unsafe environments
+
 # Ferry Booking Application
 
 A full-stack application for booking ferry rides, built with Spring Boot backend and React frontend.
